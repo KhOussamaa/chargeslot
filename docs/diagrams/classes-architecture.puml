@@ -1,0 +1,101 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FAFCF8
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+skinparam classAttributeIconSize 0
+hide empty members
+title ChargeSlot - Classes applicatives et patron Strategy
+package "controller" {
+  class ReservationController {
+    + create(request, auth) : ResponseEntity
+    + list(auth) : List
+    + get(id, auth) : ReservationView
+  }
+  class AvailabilityController
+  class CancellationController
+  class InfrastructureController
+  class NotificationController
+}
+package "service" {
+  class ReservationService {
+    + create(request, actor) : ReservationView
+    + cancel(id, actor) : ReservationView
+  }
+  class CatalogService
+  class InfrastructureService
+  class NotificationService {
+    + onReservationEvent(event)
+  }
+  interface NotificationGateway {
+    + send(driverId, message)
+  }
+  class LocalNotificationGateway
+}
+package "service.conflict" {
+  class ConflictEngine {
+    + detect(context) : List<Conflict>
+    + requireNoConflicts(context)
+  }
+  class ConflictContextFactory
+  class ConflictContext <<record>>
+  class Conflict <<record>> {
+    + code : String
+    + message : String
+    + availablePowerKw : BigDecimal
+  }
+  interface ConflictPolicy {
+    + check(context) : List<Conflict>
+  }
+  class OverlapPolicy
+  class CompatibilityPolicy
+  class MaintenancePolicy
+  class PowerCapacityPolicy {
+    + available(context) : BigDecimal
+    + {static} peak(reservations, start, end) : BigDecimal
+  }
+}
+package "repository (Spring Data JPA)" {
+  interface StationRepository {
+    + lockById(id) : Optional<ChargingStation>
+  }
+  interface ConnectorRepository
+  interface VehicleRepository
+  interface ReservationRepository {
+    + findOverlapping(stationId, start, end) : List
+    + saveAndFlush(reservation)
+  }
+  interface MaintenanceRepository
+  interface NotificationRepository
+}
+ReservationController --> ReservationService
+ReservationController --> CatalogService
+CancellationController --> ReservationService
+AvailabilityController --> CatalogService
+InfrastructureController --> InfrastructureService
+NotificationController --> CatalogService
+ReservationService --> StationRepository : verrou de station
+ReservationService --> ConnectorRepository
+ReservationService --> VehicleRepository
+ReservationService --> ReservationRepository
+ReservationService --> ConflictContextFactory
+ReservationService --> ConflictEngine
+ReservationService ..> NotificationService : événement après commit
+ConflictContextFactory --> ReservationRepository
+ConflictContextFactory --> MaintenanceRepository
+ConflictContextFactory ..> ConflictContext
+ConflictEngine o-- "4" ConflictPolicy
+ConflictEngine ..> Conflict
+ConflictPolicy <|.. OverlapPolicy
+ConflictPolicy <|.. CompatibilityPolicy
+ConflictPolicy <|.. MaintenancePolicy
+ConflictPolicy <|.. PowerCapacityPolicy
+NotificationService --> NotificationGateway
+NotificationGateway <|.. LocalNotificationGateway
+NotificationService --> NotificationRepository
+note bottom of StationRepository
+  PESSIMISTIC_WRITE, transaction READ_COMMITTED.
+  Réservation, annulation et maintenance
+  utilisent le même verrou de station.
+end note
+@enduml

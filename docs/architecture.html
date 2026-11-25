@@ -1,0 +1,55 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Architecture et décisions de conception - ChargeSlot</title><style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f3f6ef;color:#19362c;font:16px/1.7 "Segoe UI",Arial,sans-serif}header{background:#173f30;color:white;padding:25px max(24px,calc((100vw - 1050px)/2));display:flex;gap:22px;align-items:center;flex-wrap:wrap}header strong{font-size:1.4rem}header a{color:#dcf789;text-decoration:none}main{max-width:1100px;background:white;margin:30px auto;padding:45px 55px;border:1px solid #dce4d7;border-radius:16px}h1{font-size:2.2rem;line-height:1.2;letter-spacing:-1px}h2{font-size:1.45rem;margin-top:2em;border-bottom:1px solid #dce4d7;padding-bottom:8px}h3{margin-top:1.6em}a{color:#146b4c}pre{padding:20px;background:#eff3e9;border-radius:10px;overflow:auto;font-size:13px;line-height:1.6}code{font-family:Consolas,monospace;font-size:.88em}table{border-collapse:collapse;display:block;overflow:auto;margin:22px 0;font-size:14px}th,td{padding:12px 14px;border:1px solid #dce4d7;vertical-align:top}th{background:#eff3e9}tr:nth-child(even){background:#fafcf8}blockquote{border-left:4px solid #b9da82;padding-left:20px;color:#5c7068}img{max-width:100%;height:auto}li{margin:6px 0}.subtitle{color:#60746a}.diagram{margin:25px 0 55px;border:1px solid #dce4d7;padding:20px;border-radius:12px}.diagram img{display:block;background:#fafcf8}footer{text-align:center;font-size:13px;color:#60746a;padding:22px}.links{display:flex;gap:15px;flex-wrap:wrap}@media(max-width:700px){main{margin:12px;padding:24px 20px}h1{font-size:1.8rem}}@media print{body{background:white;font-size:11pt}header,footer{display:none}main{border:0;margin:0;padding:0;max-width:none}h2{break-after:avoid}pre,table{break-inside:avoid}a{color:inherit}pre{white-space:pre-wrap}table{display:table;width:100%}}
+</style></head><body><header><strong>ϟ ChargeSlot</strong><a href="../LIRE-MOI.html">Accueil du dossier</a><a href="../docs/rapport-tp.html">Rapport TP</a><a href="../docs/GITHUB-PAS-A-PAS.html">Guide GitHub</a><a href="../docs/diagrams/index.html">Diagrammes</a></header><main><h1>Architecture et décisions de conception</h1>
+<h2>Couches</h2>
+<p><code>controller</code> expose les routes REST. <code>dto.ApiModels</code> décrit les demandes validées et les réponses. <code>service</code> applique les droits et les transactions. <code>service.conflict</code> porte les règles métier. <code>repository</code> utilise Spring Data JPA. <code>domain</code> contient les entités. <code>exception</code> transforme les erreurs en réponses HTTP explicites.</p>
+<p>Les contrôleurs ne retournent pas directement les entités JPA. Les DTO sont construits dans les services, à l'intérieur des transactions, avec <code>open-in-view=false</code>. Aucune dépendance à l'interface n'existe dans le domaine.</p>
+<h2>Domaine et relations</h2>
+<ul>
+<li>Une ChargingStation possède plusieurs Connector et une puissance électrique totale.</li>
+<li>Un Vehicle appartient à un conducteur identifié par <code>driverId</code> et possède un type de connecteur et une limite de puissance persistés.</li>
+<li>Une Reservation relie un Vehicle à un Connector, pour un intervalle et une puissance fixes.</li>
+<li>Une MaintenanceWindow vise toute une station ou un connecteur de cette station.</li>
+<li>Une Notification conserve le résultat de la livraison locale et l'identifiant de la réservation.</li>
+</ul>
+<p>Les identités des conducteurs proviennent des trois comptes pédagogiques, sans entité d'inscription utilisateur. Le véhicule persiste le rattachement au conducteur. Les types sont CCS, TYPE2 et CHADEMO ; l'usage d'adaptateurs physiques n'est pas modélisé.</p>
+<h2>Intervalles et limites</h2>
+<p>Tous les instants sont des <code>Instant</code> UTC. Les heures locales sont converties dans l'interface. Les intervalles sont semi-ouverts <code>[début, fin[</code> et se chevauchent si <code>nouveauDébut &lt; ancienneFin &amp;&amp; nouvelleFin &gt; ancienDébut</code>.</p>
+<p>Le début doit être futur et au plus à 366 jours ; la durée maximale est 24 h. Ces limites bornent la démonstration et sont des décisions du projet. La puissance est un BigDecimal positif, avec au plus sept chiffres entiers et deux décimales. Aucune arithmétique binaire flottante n'est utilisée dans les règles Java.</p>
+<p>La marge facultative s'applique au chevauchement des réservations sur un même connecteur. Elle ne représente pas une consommation d'électricité et ne prolonge pas le calcul de puissance. Valeur par défaut 0 ; exemple <code>--chargeslot.operational-margin-minutes=10</code>.</p>
+<h2>Patron Strategy</h2>
+<p>ConflictEngine reçoit les beans implémentant ConflictPolicy, dans l'ordre :</p>
+<ol>
+<li>OverlapPolicy : connecteur réservé, marge comprise ; les CANCELLED sont ignorées.</li>
+<li>CompatibilityPolicy : station/connecteur actifs, type compatible et limites véhicule/connecteur.</li>
+<li>MaintenancePolicy : maintenance de station ou du connecteur recoupant le créneau.</li>
+<li>PowerCapacityPolicy : capacité station suffisante à chaque instant du créneau.</li>
+</ol>
+<p>Chaque politique retourne des Conflict ; le moteur collecte tous les motifs. En confirmation, une liste non vide devient ApiException HTTP 409. Le même moteur est utilisé par UC1, afin d'éviter des règles divergentes entre recherche et réservation.</p>
+<h2>Calcul de la capacité partagée</h2>
+<p>Pour chaque réservation existante confirmée, on clippe son intervalle au créneau demandé. On ajoute <code>+puissance</code> au début et <code>-puissance</code> à la fin dans une TreeMap. Les variations d'un même instant sont additionnées avant le calcul du pic. La puissance station disponible est <code>capacité - pic des réservations existantes</code>.</p>
+<p>Exemple Campus 80 kW : 50 kW de 14 h à 15 h et 50 kW de 15 h à 16 h donnent un pic de 50 kW, pas 100. Une nouvelle demande à 30 kW de 14 h à 16 h est acceptable sur un autre connecteur. Une demande à 40 kW sur un intervalle où 50 sont déjà utilisés est refusée avec une proposition de 30 kW.</p>
+<p>La demande doit également respecter <code>puissance &lt;= limite connecteur</code> et <code>puissance &lt;= limite véhicule</code>. Le système refuse ou propose explicitement ; il ne réduit pas automatiquement une puissance acceptée. Une réservation confirmée conserve la puissance demandée pour tout son intervalle.</p>
+<p>Complexité du pic : O(n log n) pour n réservations candidates ; adaptée au petit système du TP. Une stratégie plus avancée pourrait gérer des profils de puissance variables.</p>
+<h2>Concurrence et transactions</h2>
+<p>La simple suite « chercher un conflit, puis enregistrer » est vulnérable à deux requêtes simultanées. ReservationService prend donc un verrou <code>PESSIMISTIC_WRITE</code> sur la ligne ChargingStation avant de charger les données et de confirmer. Toutes les opérations d'écriture affectant une station existante suivent ce même verrou : réservation, annulation, modification station/connecteur et maintenance.</p>
+<p>La recherche initiale de l'identifiant de station ne charge pas prématurément le connecteur dans le contexte JPA. Les données métier sont chargées après acquisition du verrou. Sous l'isolation READ_COMMITTED utilisée par H2, la seconde transaction voit la réservation que la première vient de valider.</p>
+<p>Le verrou couvre toute la station et protège aussi deux connecteurs distincts partageant sa puissance. Les tests d'intégration lancent deux transactions dans deux threads et attendent exactement une création et un conflit, pour le doublon et pour la puissance.</p>
+<p>UC1 est une lecture indicative, sans garantie de réservation ; UC2 revérifie sous verrou. Le choix d'un verrou par station simplifie la preuve de correction au prix d'une sérialisation des écritures de cette station.</p>
+<h2>Notifications après commit</h2>
+<p>ReservationService publie un ReservationEvent dans sa transaction. NotificationService utilise <code>@TransactionalEventListener(AFTER_COMMIT)</code> et une transaction <code>REQUIRES_NEW</code>. Il ne traite donc qu'une réservation effectivement validée.</p>
+<p>NotificationGateway sépare la livraison du métier ; LocalNotificationGateway écrit dans les logs. Une exception de cet adaptateur est capturée et une notification FAILED est enregistrée. Les tests injectent une panne et vérifient que la réservation reste CONFIRMED.</p>
+<p>Il n'y a pas de transport e-mail/SMS ni de reprise automatique. Un crash entre commit et livraison peut perdre l'événement ; une outbox persistante constituerait une amélioration de production. Une panne de la base des notifications après commit ne peut pas annuler le commit de réservation.</p>
+<h2>Sécurité de la démonstration</h2>
+<p>Les mots de passe des comptes pédagogiques sont encodés avec BCrypt à l'exécution. L'identité et le rôle sont issus de Spring Security, jamais d'un champ <code>role</code> envoyé par le navigateur. Un conducteur ne peut utiliser le véhicule d'un autre, lister ses réservations/notifications ou annuler à sa place. L'opérateur peut intervenir pour les conducteurs.</p>
+<p>Les écritures exigent un jeton CSRF et le cookie de session associé. L'interface obtient le jeton via <code>/api/csrf</code> puis le renvoie dans son en-tête. Le script PowerShell utilise également une session. Les credentials de l'interface restent en mémoire de la page et sont effacés à sa déconnexion ; pas de stockage local permanent.</p>
+<p>L'écoute est limitée à la boucle locale. Ces comptes prédéfinis et HTTP local servent au TP ; un déploiement public demanderait notamment HTTPS, gestion des comptes et secrets, et un autre paramétrage de base.</p>
+<h2>Sources techniques consultées</h2>
+<ul>
+<li><a href="https://docs.spring.io/spring-boot/3.5/system-requirements.html">Spring Boot 3.5 - prérequis</a>.</li>
+<li><a href="https://docs.spring.io/spring-data/jpa/reference/jpa/locking.html">Spring Data JPA - verrouillage</a>.</li>
+<li><a href="https://docs.spring.io/spring-framework/reference/data-access/transaction/event.html">Spring Framework - événements transactionnels</a>.</li>
+<li><a href="https://plantuml.com/command-line">PlantUML - ligne de commande</a>.</li>
+</ul>
+<p>Ces références expliquent les mécanismes employés ; la preuve locale de fonctionnement est fournie par les tests exécutés et décrits dans VALIDATION.md.</p>
+</main><footer>TP1 · Processus unifié et approches agiles · Livraison locale du 25 novembre 2026</footer></body></html>

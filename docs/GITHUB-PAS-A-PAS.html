@@ -1,0 +1,245 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Git et GitHub : le faire toi-même - ChargeSlot</title><style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f3f6ef;color:#19362c;font:16px/1.7 "Segoe UI",Arial,sans-serif}header{background:#173f30;color:white;padding:25px max(24px,calc((100vw - 1050px)/2));display:flex;gap:22px;align-items:center;flex-wrap:wrap}header strong{font-size:1.4rem}header a{color:#dcf789;text-decoration:none}main{max-width:1100px;background:white;margin:30px auto;padding:45px 55px;border:1px solid #dce4d7;border-radius:16px}h1{font-size:2.2rem;line-height:1.2;letter-spacing:-1px}h2{font-size:1.45rem;margin-top:2em;border-bottom:1px solid #dce4d7;padding-bottom:8px}h3{margin-top:1.6em}a{color:#146b4c}pre{padding:20px;background:#eff3e9;border-radius:10px;overflow:auto;font-size:13px;line-height:1.6}code{font-family:Consolas,monospace;font-size:.88em}table{border-collapse:collapse;display:block;overflow:auto;margin:22px 0;font-size:14px}th,td{padding:12px 14px;border:1px solid #dce4d7;vertical-align:top}th{background:#eff3e9}tr:nth-child(even){background:#fafcf8}blockquote{border-left:4px solid #b9da82;padding-left:20px;color:#5c7068}img{max-width:100%;height:auto}li{margin:6px 0}.subtitle{color:#60746a}.diagram{margin:25px 0 55px;border:1px solid #dce4d7;padding:20px;border-radius:12px}.diagram img{display:block;background:#fafcf8}footer{text-align:center;font-size:13px;color:#60746a;padding:22px}.links{display:flex;gap:15px;flex-wrap:wrap}@media(max-width:700px){main{margin:12px;padding:24px 20px}h1{font-size:1.8rem}}@media print{body{background:white;font-size:11pt}header,footer{display:none}main{border:0;margin:0;padding:0;max-width:none}h2{break-after:avoid}pre,table{break-inside:avoid}a{color:inherit}pre{white-space:pre-wrap}table{display:table;width:100%}}
+</style></head><body><header><strong>ϟ ChargeSlot</strong><a href="../LIRE-MOI.html">Accueil du dossier</a><a href="../docs/rapport-tp.html">Rapport TP</a><a href="../docs/GITHUB-PAS-A-PAS.html">Guide GitHub</a><a href="../docs/diagrams/index.html">Diagrammes</a></header><main><h1>Git et GitHub : le faire toi-même</h1>
+<p>Ce guide est à exécuter par toi. Aucun dépôt Git/GitHub, compte, ticket, tableau, branche, PR, tag ou milestone n'a été créé automatiquement. Le workflow YAML est simplement prêt dans les fichiers.</p>
+<p>Le code est déjà réalisé localement. Les étapes ci-dessous constituent un <strong>import progressif de cette livraison</strong>, suivi de vérifications et revues réelles. Elles ne doivent pas être présentées comme un historique de développement antérieur. Ne change pas les dates des commits et n'invente pas d'auteur ou de revue.</p>
+<h2>0. Choisir le bon cas</h2>
+<p><strong>Si tes camarades ont déjà un dépôt :</strong> demande son URL et leur branche de travail. Clone-le dans un nouveau dossier, conserve leurs fichiers, puis importe les changements de cette livraison dans une branche dédiée après comparaison. Ne réinitialise pas leur dépôt et ne remplace pas leur historique. Les sections tickets/tableau/CI/jalons restent applicables ; les commandes d'initialisation ci-dessous sont réservées au cas d'un nouveau dépôt.</p>
+<p><strong>Si aucun dépôt n'existe :</strong> extrais l'archive et ouvre PowerShell dans le dossier <code>chargeslot</code>. Les instructions suivantes supposent ce cas et un dépôt distant vide.</p>
+<p>Vérifie :</p>
+<pre><code class="language-powershell">git --version
+java -version
+Get-Location
+Test-Path .git
+</code></pre>
+<p>La dernière commande doit retourner False pour la procédure de nouveau dépôt. Le JDK doit être 21. Complète aussi tes vrais noms dans le rapport.</p>
+<h2>1. Créer le dépôt vide sur GitHub</h2>
+<ol>
+<li>Connecte-toi à ton compte GitHub.</li>
+<li>Clique sur <strong>+ → New repository</strong>.</li>
+<li>Nom : <code>chargeslot</code>. Description : « TP1 - Processus unifié et approches agiles ».</li>
+<li>Choisis la visibilité convenue avec ton équipe/enseignante.</li>
+<li><strong>N'ajoute pas</strong> de README, <code>.gitignore</code> ou licence depuis l'assistant GitHub : ces fichiers existent localement et le dépôt doit être vide pour la suite.</li>
+<li>Clique sur <strong>Create repository</strong>, puis copie l'URL HTTPS du dépôt.</li>
+<li>Dans <strong>Settings → Collaborators</strong>, invite tes vrais camarades si nécessaire. Cette invitation est à faire toi-même.</li>
+</ol>
+<h2>2. Initialiser Git et déposer le cadrage (Inception)</h2>
+<p>Configurer l'identité <strong>du dépôt local</strong> avec tes coordonnées réelles :</p>
+<pre><code class="language-powershell">git init -b main
+git config user.name &quot;TON VRAI NOM&quot;
+git config user.email &quot;TON ADRESSE GIT OU NOREPLY GITHUB&quot;
+git add .gitignore .gitattributes pom.xml mvnw mvnw.cmd .mvn .github README.md docs scripts
+git add src/main/java/com/chargeslot/ChargeSlotApplication.java
+git add src/main/resources/application.properties
+git update-index --chmod=+x mvnw
+git diff --cached --stat
+git commit -m &quot;docs: importer le cadrage UP et le squelette Maven&quot;
+git remote add origin https://github.com/TON-COMPTE/chargeslot.git
+git push -u origin main
+</code></pre>
+<p>Remplace les placeholders avant d'exécuter. L'authentification Git peut ouvrir le navigateur via Git Credential Manager. Ne colle pas ton mot de passe GitHub dans un fichier ou une commande ; les comptes applicatifs Alice/Bob n'ont aucun rapport avec ton compte GitHub.</p>
+<p>Cette première étape importe le cadrage et le squelette ; les sources métier non encore ajoutées restent sur le disque en fichiers non suivis. <strong>N'utilise pas <code>git add .</code> à ce stade</strong>, sinon tout le code partirait directement sur main et tu perdrais l'import par UC expliqué ci-dessous.</p>
+<p>Une commande Maven exécutée localement voit aussi les sources non suivies présentes sur le disque. Pour les jalons intermédiaires, la CI distante vérifie donc l'état réellement committé et fait foi.</p>
+<h2>3. Créer les quatre milestones</h2>
+<p>Dans le dépôt : <strong>Issues → Milestones → New milestone</strong>. Crée :</p>
+<table>
+<thead>
+<tr>
+  <th>Milestone</th>
+  <th>Description à saisir</th>
+  <th>Condition de clôture</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><code>1-inception-lco</code></td>
+  <td>Vision, périmètre, acteurs, UC et priorités validés.</td>
+  <td>Équipe d'accord sur les objectifs ; documents présents.</td>
+</tr>
+<tr>
+  <td><code>2-elaboration-lca</code></td>
+  <td>Architecture exécutable de réservation et maîtrise des conflits.</td>
+  <td>UC2/UC3 committés, test nominal/conflit et CI distante verte, tag v0.1-elaboration.</td>
+</tr>
+<tr>
+  <td><code>3-construction-ioc</code></td>
+  <td>Six UC utilisables et tests de leurs critères.</td>
+  <td>Branches fonctionnelles fusionnées, tests d'intégration complets verts.</td>
+</tr>
+<tr>
+  <td><code>4-transition-release</code></td>
+  <td>Interface, démonstration, revue externe et corrections.</td>
+  <td>Documentation à jour, vraie revue d'une autre équipe, corrections acceptées.</td>
+</tr>
+</tbody>
+</table>
+<p>Tu peux ajouter un ticket de cadrage à Inception et un ticket de revue/démonstration à Transition. Les six UC constituent les tickets fonctionnels principaux ; ces tickets d'organisation sont supplémentaires.</p>
+<h2>4. Créer les tickets UC</h2>
+<p>Dans <strong>Issues → New issue</strong>, copie le titre et le contenu de chaque fichier dans <code>docs/github/tickets/</code>. Conserve un tableau des <strong>numéros réellement attribués</strong> : UC1 n'est pas forcément l'issue #1.</p>
+<table>
+<thead>
+<tr>
+  <th>UC</th>
+  <th>Fichier de contenu</th>
+  <th>Milestone</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>UC1</td>
+  <td><code>UC1-disponibilites.md</code></td>
+  <td>3-construction-ioc</td>
+</tr>
+<tr>
+  <td>UC2</td>
+  <td><code>UC2-reservation.md</code></td>
+  <td>2-elaboration-lca</td>
+</tr>
+<tr>
+  <td>UC3</td>
+  <td><code>UC3-conflits.md</code></td>
+  <td>2-elaboration-lca</td>
+</tr>
+<tr>
+  <td>UC4</td>
+  <td><code>UC4-annulation.md</code></td>
+  <td>3-construction-ioc</td>
+</tr>
+<tr>
+  <td>UC5</td>
+  <td><code>UC5-notifications.md</code></td>
+  <td>3-construction-ioc</td>
+</tr>
+<tr>
+  <td>UC6</td>
+  <td><code>UC6-infrastructure.md</code></td>
+  <td>3-construction-ioc</td>
+</tr>
+</tbody>
+</table>
+<p>Assigne les tickets à leurs responsables réels. Labels proposés : <code>type:use-case</code>, <code>priority:P0</code> pour UC2/UC3, <code>priority:P1</code> pour UC1/UC5, <code>priority:P2</code> pour UC4/UC6, <code>phase:elaboration</code> ou <code>phase:construction</code>, <code>risk:technical</code> pour UC3. Les labels sont des conventions utiles du projet.</p>
+<h2>5. Créer le tableau de bord</h2>
+<ol>
+<li>Depuis ton profil GitHub : <strong>Projects → New project → Board</strong>.</li>
+<li>Nom : <code>ChargeSlot - suivi UP</code>.</li>
+<li>Configure le champ Status avec <strong>Backlog → Ready → In Progress → Review → Done</strong>.</li>
+<li>Ajoute les six issues du dépôt au projet et lie le projet au dépôt depuis son onglet Projects si nécessaire.</li>
+<li>Place UC3 et UC2 en Ready ; les autres en Backlog.</li>
+<li>Déplace un ticket en In Progress lors de son import/vérification, puis Review lors de sa PR. Done signifie que les critères et vérifications sont réellement satisfaits.</li>
+</ol>
+<h2>6. Importer UC3 dans sa branche</h2>
+<p>Cette étape ajoute le domaine et les éléments partagés nécessaires au moteur de conflits. Certaines classes communes portent déjà les structures des UC suivants ; leur préparation technique est normale, leurs routes dédiées seront importées séparément.</p>
+<pre><code class="language-powershell">git switch -c feature/uc03-conflits
+git add src/main/java/com/chargeslot/domain
+git add src/main/java/com/chargeslot/repository
+git add src/main/java/com/chargeslot/dto
+git add src/main/java/com/chargeslot/exception
+git add src/main/java/com/chargeslot/config
+git add src/main/java/com/chargeslot/service/conflict
+git add src/main/java/com/chargeslot/service/Actor.java
+git add src/main/java/com/chargeslot/service/Intervals.java
+git add src/main/java/com/chargeslot/service/CatalogService.java
+git add src/main/java/com/chargeslot/controller/SessionController.java
+git add src/main/java/com/chargeslot/controller/CatalogController.java
+git add src/test/java/com/chargeslot/ConflictPoliciesTest.java
+git diff --cached --stat
+git commit -m &quot;feat(UC3): importer le moteur de conflits et ses tests unitaires&quot;
+git push -u origin feature/uc03-conflits
+</code></pre>
+<p>Créer la PR sur GitHub : <strong>Pull requests → New pull request</strong>, base <code>main</code>, compare <code>feature/uc03-conflits</code>. Dans la description, écrire le problème, ce que vérifient les quatre politiques, les tests, et <code>Refs #NUMERO_REEL_UC3</code> en remplaçant le numéro.</p>
+<p>Attendre la CI verte, demander une vraie relecture à un camarade et fusionner. Ne ferme UC3 qu'après le test de bout en bout de l'étape suivante, qui complète la preuve du risque.</p>
+<p>Après chaque fusion GitHub :</p>
+<pre><code class="language-powershell">git switch main
+git pull --ff-only origin main
+</code></pre>
+<p>Les fichiers des UC non encore importés restent localement non suivis. N'exécute pas de commande de nettoyage des fichiers non suivis.</p>
+<h2>7. Importer UC2 et valider l'Élaboration</h2>
+<pre><code class="language-powershell">git switch -c feature/uc02-reservation
+git add src/main/java/com/chargeslot/service/ReservationEvent.java
+git add src/main/java/com/chargeslot/service/ReservationService.java
+git add src/main/java/com/chargeslot/controller/ReservationController.java
+git add src/test/java/com/chargeslot/ElaborationIntegrationTest.java
+git commit -m &quot;feat(UC2): importer la reservation REST de bout en bout&quot;
+git push -u origin feature/uc02-reservation
+</code></pre>
+<p>Même procédure de PR et revue. La CI doit exécuter ConflictPoliciesTest et ElaborationIntegrationTest : création 201, conflit 409, une seule réservation conservée. UC5 n'est pas encore importé : l'événement de notification est publié mais n'a pas encore de listener ; le test d'Élaboration n'exige pas la notification.</p>
+<p>Après fusion, revenir sur main et faire pull. Quand les objectifs Inception ont été effectivement acceptés, taguer le commit de cadrage correspondant avec <code>v0.0-inception</code> (identifier son vrai hash avec <code>git log --oneline</code>). Pour LCA, après CI distante verte de l'état UC2/UC3 :</p>
+<pre><code class="language-powershell">git tag -a v0.1-elaboration -m &quot;LCA: reservation executable et tests CI verifies&quot;
+git push origin v0.1-elaboration
+</code></pre>
+<p>Fermer les tickets UC2/UC3 si leurs critères sont vérifiés, puis le milestone <code>2-elaboration-lca</code>. Le milestone Inception peut être fermé après validation de son cadrage. Le tag Inception peut se créer avec <code>git tag -a v0.0-inception HASH_DU_CADRAGE -m &quot;LCO: cadrage valide&quot;</code>, puis <code>git push origin v0.0-inception</code> ; ne pas remplacer le hash par une date inventée.</p>
+<h2>8. Importer les quatre autres UC</h2>
+<p>Pour <strong>chaque</strong> bloc : partir de main à jour ; créer la branche ; ajouter les seuls fichiers indiqués ; committer ; pousser ; créer une PR liée à la vraie issue ; faire relire et constater la CI ; fusionner ; revenir sur main et pull. Ne pas lancer les quatre blocs sans faire les fusions entre eux.</p>
+<h3>UC1</h3>
+<pre><code class="language-powershell">git switch -c feature/uc01-disponibilites
+git add src/main/java/com/chargeslot/controller/AvailabilityController.java
+git commit -m &quot;feat(UC1): exposer la recherche de disponibilites&quot;
+git push -u origin feature/uc01-disponibilites
+</code></pre>
+<h3>UC4</h3>
+<pre><code class="language-powershell">git switch -c feature/uc04-annulation
+git add src/main/java/com/chargeslot/controller/CancellationController.java
+git commit -m &quot;feat(UC4): exposer l'annulation autorisee et idempotente&quot;
+git push -u origin feature/uc04-annulation
+</code></pre>
+<p>Le service partagé ReservationService contient déjà la méthode d'annulation ; cette branche expose son cas d'utilisation.</p>
+<h3>UC5</h3>
+<pre><code class="language-powershell">git switch -c feature/uc05-notifications
+git add src/main/java/com/chargeslot/service/NotificationGateway.java
+git add src/main/java/com/chargeslot/service/LocalNotificationGateway.java
+git add src/main/java/com/chargeslot/service/NotificationService.java
+git add src/main/java/com/chargeslot/controller/NotificationController.java
+git commit -m &quot;feat(UC5): livrer et tracer les notifications locales apres commit&quot;
+git push -u origin feature/uc05-notifications
+</code></pre>
+<h3>UC6 et tests complets</h3>
+<pre><code class="language-powershell">git switch -c feature/uc06-infrastructure
+git add src/main/java/com/chargeslot/service/InfrastructureService.java
+git add src/main/java/com/chargeslot/controller/InfrastructureController.java
+git add src/test/java/com/chargeslot/ReservationIntegrationTest.java
+git commit -m &quot;feat(UC6): administrer l'infrastructure et verifier les six UC&quot;
+git push -u origin feature/uc06-infrastructure
+</code></pre>
+<p>Les tests d'intégration complets vérifient aussi UC1/UC4/UC5 et les réservations concurrentes. Attendre cette validation complète avant de considérer tous les critères terminés. Les preuves des tickets peuvent pointer vers les tests et la PR correspondante.</p>
+<p>Après fusion UC6 et CI verte :</p>
+<pre><code class="language-powershell">git tag -a v0.2-construction -m &quot;IOC: six UC implementes et tests verifies&quot;
+git push origin v0.2-construction
+</code></pre>
+<p>Fermer le milestone Construction lorsque ses tickets et critères sont effectivement validés.</p>
+<h2>9. Interface, Transition et revue externe</h2>
+<pre><code class="language-powershell">git switch -c feature/interface-documentation
+git add src/main/resources/static
+git commit -m &quot;feat: ajouter l'interface locale de demonstration&quot;
+git push -u origin feature/interface-documentation
+</code></pre>
+<p>Faire la PR et sa revue, puis fusionner. Tester la démonstration. Demander à une <strong>autre équipe</strong> de remplir REVUE-CROISEE.md. Reporter leurs observations réelles, créer les tickets de correction et traiter les remarques. Ajouter la grille réellement remplie dans un commit/une PR séparée.</p>
+<p>Quand la revue externe et les corrections sont acceptées, la CI est verte et la démonstration fonctionne :</p>
+<pre><code class="language-powershell">git switch main
+git pull --ff-only origin main
+git tag -a v1.0.0 -m &quot;Product Release: revue externe et demonstration validees&quot;
+git push origin v1.0.0
+</code></pre>
+<p>Fermer le milestone Transition. Le numéro 1.0.0 du logiciel local n'est pas, à lui seul, la preuve que ce jalon a été approuvé.</p>
+<h2>10. Vérifier la CI</h2>
+<p>Dans <strong>Actions</strong>, ouvrir « Java 21 - build et tests », choisir le dernier run de la branche/PR, puis le job <code>verify</code>. Il installe Java 21 et exécute <code>./mvnw verify</code>. Les rapports sont conservés dans l'artifact <code>resultats-tests</code>.</p>
+<p>La réussite locale est fournie ; <strong>aucune CI distante n'a été lancée dans cette session</strong>. Un run vert distant doit être constaté après ton push. Si le run échoue, lire la première erreur utile dans le job avant de fusionner ; ne pas poser le tag LCA pour masquer l'échec.</p>
+<h2>11. Contrôle final avant remise</h2>
+<ul>
+<li>[ ] Six issues UC avec responsables et critères.</li>
+<li>[ ] Quatre milestones et tableau de bord renseignés.</li>
+<li>[ ] Une branche et une PR identifiables par UC.</li>
+<li>[ ] Sources PlantUML committées avec les rendus.</li>
+<li>[ ] Tests locaux et CI distante verts.</li>
+<li>[ ] Quatre tags de jalons présents et associés à des états vérifiés.</li>
+<li>[ ] Revue réellement faite par une autre équipe et corrections suivies.</li>
+<li>[ ] README utilisable par un autre étudiant, noms réels complétés.</li>
+<li>[ ] <code>git status</code> ne révèle pas de fichier source oublié (les JAR, target et data sont volontairement ignorés).</li>
+</ul>
+<h2>Références GitHub officielles</h2>
+<ul>
+<li><a href="https://docs.github.com/en/get-started/git-basics/managing-remote-repositories">Gérer les remotes</a>.</li>
+<li><a href="https://docs.github.com/en/issues/using-labels-and-milestones-to-track-work/creating-and-editing-milestones-for-issues-and-pull-requests">Créer les milestones</a>.</li>
+<li><a href="https://docs.github.com/en/issues/planning-and-tracking-with-projects/creating-projects/creating-a-project">Créer un projet Board</a>.</li>
+<li><a href="https://docs.github.com/en/actions/tutorials/build-and-test-code/java-with-maven">Compiler et tester Java/Maven dans Actions</a>.</li>
+</ul>
+</main><footer>TP1 · Processus unifié et approches agiles · Livraison locale du 25 novembre 2026</footer></body></html>

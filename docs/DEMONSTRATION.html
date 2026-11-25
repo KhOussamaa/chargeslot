@@ -1,0 +1,45 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Démonstration ChargeSlot (environ 7 minutes) - ChargeSlot</title><style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f3f6ef;color:#19362c;font:16px/1.7 "Segoe UI",Arial,sans-serif}header{background:#173f30;color:white;padding:25px max(24px,calc((100vw - 1050px)/2));display:flex;gap:22px;align-items:center;flex-wrap:wrap}header strong{font-size:1.4rem}header a{color:#dcf789;text-decoration:none}main{max-width:1100px;background:white;margin:30px auto;padding:45px 55px;border:1px solid #dce4d7;border-radius:16px}h1{font-size:2.2rem;line-height:1.2;letter-spacing:-1px}h2{font-size:1.45rem;margin-top:2em;border-bottom:1px solid #dce4d7;padding-bottom:8px}h3{margin-top:1.6em}a{color:#146b4c}pre{padding:20px;background:#eff3e9;border-radius:10px;overflow:auto;font-size:13px;line-height:1.6}code{font-family:Consolas,monospace;font-size:.88em}table{border-collapse:collapse;display:block;overflow:auto;margin:22px 0;font-size:14px}th,td{padding:12px 14px;border:1px solid #dce4d7;vertical-align:top}th{background:#eff3e9}tr:nth-child(even){background:#fafcf8}blockquote{border-left:4px solid #b9da82;padding-left:20px;color:#5c7068}img{max-width:100%;height:auto}li{margin:6px 0}.subtitle{color:#60746a}.diagram{margin:25px 0 55px;border:1px solid #dce4d7;padding:20px;border-radius:12px}.diagram img{display:block;background:#fafcf8}footer{text-align:center;font-size:13px;color:#60746a;padding:22px}.links{display:flex;gap:15px;flex-wrap:wrap}@media(max-width:700px){main{margin:12px;padding:24px 20px}h1{font-size:1.8rem}}@media print{body{background:white;font-size:11pt}header,footer{display:none}main{border:0;margin:0;padding:0;max-width:none}h2{break-after:avoid}pre,table{break-inside:avoid}a{color:inherit}pre{white-space:pre-wrap}table{display:table;width:100%}}
+</style></head><body><header><strong>ϟ ChargeSlot</strong><a href="../LIRE-MOI.html">Accueil du dossier</a><a href="../docs/rapport-tp.html">Rapport TP</a><a href="../docs/GITHUB-PAS-A-PAS.html">Guide GitHub</a><a href="../docs/diagrams/index.html">Diagrammes</a></header><main><h1>Démonstration ChargeSlot (environ 7 minutes)</h1>
+<h2>Préparer</h2>
+<p>Depuis le dossier chargeslot, démarrer une base mémoire vierge :</p>
+<pre><code class="language-powershell">java -jar .\chargeslot.jar '--spring.datasource.url=jdbc:h2:mem:demo;DB_CLOSE_DELAY=-1'
+</code></pre>
+<p>Ouvrir http://127.0.0.1:8080. Choisir un début demain à 14 h et une fin à 15 h dans le navigateur. Conserver les mêmes heures pour tous les essais simultanés.</p>
+<h2>1. Présenter le problème (30 secondes)</h2>
+<p>« ChargeSlot vérifie le temps, la compatibilité, la maintenance et la puissance partagée. Deux connecteurs libres ne suffisent donc pas à garantir deux recharges simultanées. »</p>
+<p>Montrer les six UC dans le rapport et signaler le risque UC3.</p>
+<h2>2. Réserver normalement (1 minute)</h2>
+<p>Se connecter avec Alice. Choisir sa voiture CCS, station Campus, demain 14 h-15 h, 50 kW. Rechercher puis réserver Campus CCS A. Montrer la réservation confirmée et la notification locale.</p>
+<h2>3. Démontrer le risque (1 minute)</h2>
+<p>Se déconnecter puis se connecter avec Bob. Même période, station Campus, 40 kW : la recherche ne propose aucun connecteur CCS compatible avec cette puissance, car seuls 30 kW restent disponibles.</p>
+<p>Réduire à 30 kW : Campus CCS B devient disponible. Le réserver. Expliquer <code>50 + 30 = 80 kW</code>. Le chevauchement sur A est aussi exclu.</p>
+<p>Pour montrer explicitement le HTTP 409 et la proposition chiffrée, utiliser le script API sur une base vierge, ou les tests. L'interface masque normalement les connecteurs indisponibles plutôt que de proposer un bouton voué au refus.</p>
+<h2>4. Annuler et libérer (45 secondes)</h2>
+<p>Revenir à Alice ; annuler sa réservation avant son début. Montrer le statut Annulée et la notification. Rechercher à nouveau : le connecteur et sa puissance sont libérés.</p>
+<h2>5. Gestion opérateur (1 minute)</h2>
+<p>Se connecter avec operateur. Ajouter une station et un connecteur. Planifier une maintenance sur un créneau sans réservation. Une maintenance de station touche tous ses connecteurs ; une maintenance de connecteur ne touche que lui.</p>
+<p>Essayer une maintenance Campus qui recoupe une réservation encore confirmée de Bob : le système refuse et demande d'annuler d'abord. Montrer qu'un conducteur ne voit pas les formulaires opérateur et que les tests contrôlent aussi l'accès côté serveur.</p>
+<h2>6. Montrer les preuves techniques (1 minute)</h2>
+<p>Ouvrir le diagramme de classes du domaine, celui des classes applicatives et le diagramme de séquence. Suivre une réservation : contrôleur → service → verrou de station → politiques → repository → commit → notification.</p>
+<p>Lancer ou montrer le résultat :</p>
+<pre><code class="language-powershell">.\mvnw.cmd --batch-mode --no-transfer-progress verify
+</code></pre>
+<p>Mettre en avant ElaborationIntegrationTest (201 puis 409 sans doublon), les deux tests de concurrence et le test de panne de notification. Les résultats locaux sont dans VALIDATION.md. La CI distante doit être montrée depuis le compte GitHub après exécution par l'équipe.</p>
+<h2>7. Terminer avec l'état réel (30 secondes)</h2>
+<p>Montrer la traçabilité UC → ticket → branche → classes → tests après création GitHub. Montrer la grille de revue remplie par une autre équipe lorsqu'elle sera réalisée. Ne pas présenter la grille vierge comme une revue terminée.</p>
+<h2>Script HTTP reproductible</h2>
+<p>Dans un deuxième terminal, avec l'application démarrée sur une base mémoire vierge :</p>
+<pre><code class="language-powershell">powershell -ExecutionPolicy Bypass -File .\scripts\demo-api.ps1
+</code></pre>
+<p>Le script découvre les identifiants, récupère les jetons CSRF, crée 50 kW pour Alice, constate le refus de 40 kW pour Bob, accepte 30 kW et annule les réservations créées par le script dans son bloc de nettoyage. Ne pas l'exécuter en même temps que la démonstration manuelle sur le même créneau.</p>
+<h2>Questions à préparer pour l'oral</h2>
+<ul>
+<li>Pourquoi UC3 avant une interface complète ? Pour réduire d'abord le risque portant sur la validité des réservations.</li>
+<li>Pourquoi un verrou sur la station ? La puissance est partagée entre connecteurs ; verrouiller seulement un connecteur ne suffit pas.</li>
+<li>Pourquoi calculer un pic ? Additionner toutes les réservations qui croisent un grand intervalle surestime parfois la consommation simultanée.</li>
+<li>Pourquoi Strategy ? Chaque règle est indépendante et testable ; on peut ajouter une politique.</li>
+<li>Pourquoi les notifications après commit ? Ne pas notifier une réservation annulée par rollback ; une panne de transport ne doit pas annuler la réservation.</li>
+<li>Quelles limites ? Comptes et véhicules prédéfinis, notification locale, H2 local, pas de borne physique ni de paiement.</li>
+</ul>
+</main><footer>TP1 · Processus unifié et approches agiles · Livraison locale du 25 novembre 2026</footer></body></html>

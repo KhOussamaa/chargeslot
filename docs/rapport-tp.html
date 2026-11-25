@@ -1,0 +1,323 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TP1 - Processus unifié et approches agiles - ChargeSlot</title><style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f3f6ef;color:#19362c;font:16px/1.7 "Segoe UI",Arial,sans-serif}header{background:#173f30;color:white;padding:25px max(24px,calc((100vw - 1050px)/2));display:flex;gap:22px;align-items:center;flex-wrap:wrap}header strong{font-size:1.4rem}header a{color:#dcf789;text-decoration:none}main{max-width:1100px;background:white;margin:30px auto;padding:45px 55px;border:1px solid #dce4d7;border-radius:16px}h1{font-size:2.2rem;line-height:1.2;letter-spacing:-1px}h2{font-size:1.45rem;margin-top:2em;border-bottom:1px solid #dce4d7;padding-bottom:8px}h3{margin-top:1.6em}a{color:#146b4c}pre{padding:20px;background:#eff3e9;border-radius:10px;overflow:auto;font-size:13px;line-height:1.6}code{font-family:Consolas,monospace;font-size:.88em}table{border-collapse:collapse;display:block;overflow:auto;margin:22px 0;font-size:14px}th,td{padding:12px 14px;border:1px solid #dce4d7;vertical-align:top}th{background:#eff3e9}tr:nth-child(even){background:#fafcf8}blockquote{border-left:4px solid #b9da82;padding-left:20px;color:#5c7068}img{max-width:100%;height:auto}li{margin:6px 0}.subtitle{color:#60746a}.diagram{margin:25px 0 55px;border:1px solid #dce4d7;padding:20px;border-radius:12px}.diagram img{display:block;background:#fafcf8}footer{text-align:center;font-size:13px;color:#60746a;padding:22px}.links{display:flex;gap:15px;flex-wrap:wrap}@media(max-width:700px){main{margin:12px;padding:24px 20px}h1{font-size:1.8rem}}@media print{body{background:white;font-size:11pt}header,footer{display:none}main{border:0;margin:0;padding:0;max-width:none}h2{break-after:avoid}pre,table{break-inside:avoid}a{color:inherit}pre{white-space:pre-wrap}table{display:table;width:100%}}
+</style></head><body><header><strong>ϟ ChargeSlot</strong><a href="../LIRE-MOI.html">Accueil du dossier</a><a href="../docs/rapport-tp.html">Rapport TP</a><a href="../docs/GITHUB-PAS-A-PAS.html">Guide GitHub</a><a href="../docs/diagrams/index.html">Diagrammes</a></header><main><h1>TP1 - Processus unifié et approches agiles</h1>
+<p><strong>Projet : ChargeSlot</strong><br />
+<strong>Membres : à compléter avec vos noms réels</strong><br />
+<strong>Livraison locale : 25 novembre 2026</strong><br />
+<strong>État : réalisation locale ; publication GitHub et revue externe à effectuer par l'équipe.</strong></p>
+<h2>1. Vision en cinq lignes</h2>
+<p>Les conducteurs de véhicules électriques rencontrent des files d'attente et une disponibilité imprévisible des bornes de recharge.<br />
+ChargeSlot permet de consulter et de réserver à l'avance un connecteur compatible avec leur véhicule.<br />
+Le système empêche les doubles réservations et détecte les conflits liés à la maintenance et à la puissance électrique disponible.<br />
+Les opérateurs administrent les stations, leurs connecteurs et leurs périodes d'indisponibilité.<br />
+La plateforme réduit l'attente, améliore l'utilisation des bornes et rend la recharge plus fiable.</p>
+<h2>2. Acteurs et périmètre</h2>
+<table>
+<thead>
+<tr>
+  <th>Acteur</th>
+  <th>Responsabilités</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Conducteur</td>
+  <td>Consulter les disponibilités de ses véhicules, réserver, consulter et annuler ses réservations, lire ses notifications.</td>
+</tr>
+<tr>
+  <td>Opérateur de station</td>
+  <td>Ajouter/modifier/désactiver stations et connecteurs, planifier/supprimer les maintenances et intervenir sur les réservations.</td>
+</tr>
+<tr>
+  <td>Fournisseur de notifications</td>
+  <td>Livrer les confirmations et annulations ; représenté ici par un adaptateur local remplaçable.</td>
+</tr>
+</tbody>
+</table>
+<p>L'administrateur facultatif du document initial est fusionné avec l'opérateur. Le système lui-même n'est pas un acteur externe. UC3 est une sous-fonction incluse dans UC2 ; son isolation permet de suivre le risque technique demandé par le sujet.</p>
+<p>Hors périmètre : facturation/paiement, commande physique de recharge, inscription libre, application mobile et e-mail/SMS réels.</p>
+<h2>3. Les six cas d'utilisation</h2>
+<table>
+<thead>
+<tr>
+  <th>ID</th>
+  <th>Cas d'utilisation</th>
+  <th>Acteur initiateur</th>
+  <th>Résultat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>UC1</td>
+  <td>Consulter les disponibilités</td>
+  <td>Conducteur / opérateur</td>
+  <td>Connecteurs compatibles disponibles sur tout le créneau et à la puissance demandée.</td>
+</tr>
+<tr>
+  <td>UC2</td>
+  <td>Réserver un créneau de recharge</td>
+  <td>Conducteur / opérateur</td>
+  <td>Réservation persistée avec statut CONFIRMED, ou refus explicite.</td>
+</tr>
+<tr>
+  <td>UC3</td>
+  <td>Vérifier les conflits</td>
+  <td>Inclus dans UC2</td>
+  <td>Détection des chevauchements, incompatibilités, maintenances et dépassements de puissance.</td>
+</tr>
+<tr>
+  <td>UC4</td>
+  <td>Annuler une réservation</td>
+  <td>Propriétaire / opérateur</td>
+  <td>Statut CANCELLED et créneau libéré.</td>
+</tr>
+<tr>
+  <td>UC5</td>
+  <td>Notifier le conducteur</td>
+  <td>Déclenché après UC2/UC4</td>
+  <td>Notification locale SENT ou FAILED, sans suppression de la réservation.</td>
+</tr>
+<tr>
+  <td>UC6</td>
+  <td>Gérer l'infrastructure</td>
+  <td>Opérateur</td>
+  <td>Stations/connecteurs administrés et maintenances maîtrisées.</td>
+</tr>
+</tbody>
+</table>
+<p>Relations : UC2 inclut UC3 et UC5 ; UC4 inclut UC5. Les <a href="use-cases.html">fiches UC</a> détaillent préconditions, scénario nominal, alternatives et postconditions.</p>
+<h2>4. Priorisation</h2>
+<p>Échelle : 1 faible, 5 très élevé. Somme simple pour rendre le choix explicite ; en cas d'égalité, le risque guide la décision.</p>
+<table>
+<thead>
+<tr>
+  <th>Ordre</th>
+  <th>UC</th>
+  <th style="text-align:right">Valeur métier</th>
+  <th style="text-align:right">Risque</th>
+  <th style="text-align:right">Impact architecture</th>
+  <th style="text-align:right">Total</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>1</td>
+  <td>UC3 - Vérifier les conflits</td>
+  <td style="text-align:right">5</td>
+  <td style="text-align:right">5</td>
+  <td style="text-align:right">5</td>
+  <td style="text-align:right">15</td>
+</tr>
+<tr>
+  <td>2</td>
+  <td>UC2 - Réserver</td>
+  <td style="text-align:right">5</td>
+  <td style="text-align:right">4</td>
+  <td style="text-align:right">5</td>
+  <td style="text-align:right">14</td>
+</tr>
+<tr>
+  <td>3</td>
+  <td>UC1 - Disponibilités</td>
+  <td style="text-align:right">4</td>
+  <td style="text-align:right">2</td>
+  <td style="text-align:right">3</td>
+  <td style="text-align:right">9</td>
+</tr>
+<tr>
+  <td>4</td>
+  <td>UC5 - Notifications</td>
+  <td style="text-align:right">3</td>
+  <td style="text-align:right">3</td>
+  <td style="text-align:right">3</td>
+  <td style="text-align:right">9</td>
+</tr>
+<tr>
+  <td>5</td>
+  <td>UC6 - Infrastructure</td>
+  <td style="text-align:right">3</td>
+  <td style="text-align:right">2</td>
+  <td style="text-align:right">3</td>
+  <td style="text-align:right">8</td>
+</tr>
+<tr>
+  <td>6</td>
+  <td>UC4 - Annulation</td>
+  <td style="text-align:right">3</td>
+  <td style="text-align:right">1</td>
+  <td style="text-align:right">2</td>
+  <td style="text-align:right">6</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Premier incrément : UC2 + UC3.</strong> Il valide à la fois la valeur principale et le risque. Une simple liste de stations ne permettrait pas de prouver la maîtrise des conflits.</p>
+<h2>5. Trois itérations, quatre phases UP</h2>
+<p>Il s'agit du plan de développement et des critères de validation, pas d'un historique Git inventé. La réalisation locale a été produite dans cette session ; l'équipe doit effectuer elle-même la traçabilité Git/GitHub selon le guide.</p>
+<table>
+<thead>
+<tr>
+  <th>Itération</th>
+  <th>Phase(s)</th>
+  <th>Contenu et preuve attendue</th>
+  <th>Jalon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>I1</td>
+  <td>Inception</td>
+  <td>Vision, acteurs, six UC, priorisation, périmètre et risques.</td>
+  <td>LCO : objectifs compris et acceptés par l'équipe.</td>
+</tr>
+<tr>
+  <td>I1</td>
+  <td>Élaboration</td>
+  <td>Route POST complète contrôleur/service/JPA/H2, vérification des conflits, premier test automatisé et CI distante verte.</td>
+  <td>LCA : architecture exécutable ; tag <code>v0.1-elaboration</code>.</td>
+</tr>
+<tr>
+  <td>I2</td>
+  <td>Construction</td>
+  <td>Finalisation des six UC, administration, notifications, tests unitaires et intégration.</td>
+  <td>IOC : fonctions principales utilisables ; tag proposé <code>v0.2-construction</code>.</td>
+</tr>
+<tr>
+  <td>I3</td>
+  <td>Fin de Construction + Transition</td>
+  <td>Interface locale, démonstration, tests de concurrence, documentation, revue par une autre équipe et corrections.</td>
+  <td>Product Release : version présentable acceptée ; tag proposé <code>v1.0.0</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>Pour Inception, un tag <code>v0.0-inception</code> est proposé afin que les quatre phases aient chacune un tag de jalon. Le sujet impose le nom <code>v0.1-elaboration</code> ; les autres noms sont des conventions du projet.</p>
+<p>Milestones à créer manuellement : <code>1-inception-lco</code>, <code>2-elaboration-lca</code>, <code>3-construction-ioc</code>, <code>4-transition-release</code>. Ne fermer LCA qu'après le passage réel de la CI distante ; ne déclarer la revue achevée qu'après retour d'une autre équipe.</p>
+<h2>6. Risque technique et architecture exécutable</h2>
+<p>La route centrale est <code>POST /api/reservations</code>. Elle traverse <code>ReservationController</code>, <code>ReservationService</code>, <code>ConflictEngine</code>, les repositories et H2. Elle retourne <code>201 Created</code> et enregistre une réservation, ou <code>409 Conflict</code> sans nouvel enregistrement.</p>
+<p>Le patron Strategy sépare quatre politiques : <code>OverlapPolicy</code>, <code>CompatibilityPolicy</code>, <code>MaintenancePolicy</code>, <code>PowerCapacityPolicy</code>. Le service transactionnel prend un verrou pessimiste sur la station avant lecture des réservations puis insertion. Deux requêtes concurrentes ne peuvent ainsi confirmer un même connecteur ou dépasser ensemble la capacité électrique.</p>
+<p>La puissance requise doit être compatible avec le véhicule, le connecteur et le minimum de puissance station disponible sur <strong>tout</strong> le créneau. Un balayage chronologique calcule le pic réellement simultané. Deux réservations consécutives de 50 kW ne consomment pas 100 kW simultanément.</p>
+<p>Les notifications sont déclenchées après commit dans une transaction distincte. L'échec de l'adaptateur est enregistré comme FAILED ; la réservation reste valide. Le fonctionnement local est une simulation explicite d'un fournisseur de notifications.</p>
+<p>Voir <a href="architecture.html">l'architecture détaillée</a> et les <a href="diagrams/index.html">diagrammes rendus</a>.</p>
+<h2>7. Traçabilité des UC</h2>
+<table>
+<thead>
+<tr>
+  <th>UC</th>
+  <th>Ticket à créer</th>
+  <th>Branche à utiliser</th>
+  <th>Principaux éléments locaux</th>
+  <th>Vérification</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>UC1</td>
+  <td>UC1 - Consulter les disponibilités</td>
+  <td><code>feature/uc01-disponibilites</code></td>
+  <td>AvailabilityController, CatalogService, ConflictEngine</td>
+  <td>Filtrage station/type, exclusion des conflits.</td>
+</tr>
+<tr>
+  <td>UC2</td>
+  <td>UC2 - Réserver un créneau</td>
+  <td><code>feature/uc02-reservation</code></td>
+  <td>ReservationController, ReservationService, Reservation, repositories</td>
+  <td>201, persistance et statut CONFIRMED.</td>
+</tr>
+<tr>
+  <td>UC3</td>
+  <td>UC3 - Vérifier les conflits</td>
+  <td><code>feature/uc03-conflits</code></td>
+  <td>ConflictEngine et quatre stratégies</td>
+  <td>Tests unitaires des limites + conflit HTTP 409 + concurrence.</td>
+</tr>
+<tr>
+  <td>UC4</td>
+  <td>UC4 - Annuler une réservation</td>
+  <td><code>feature/uc04-annulation</code></td>
+  <td>CancellationController, ReservationService.cancel</td>
+  <td>Propriétaire/opérateur, statut CANCELLED, réutilisation du créneau.</td>
+</tr>
+<tr>
+  <td>UC5</td>
+  <td>UC5 - Notifications locales</td>
+  <td><code>feature/uc05-notifications</code></td>
+  <td>NotificationService, NotificationGateway, NotificationRepository</td>
+  <td>SENT, FAILED et réservation conservée.</td>
+</tr>
+<tr>
+  <td>UC6</td>
+  <td>UC6 - Gérer l'infrastructure</td>
+  <td><code>feature/uc06-infrastructure</code></td>
+  <td>InfrastructureController, InfrastructureService</td>
+  <td>Droits opérateur, maintenance, désactivation et capacité.</td>
+</tr>
+</tbody>
+</table>
+<p>Le code préparé localement ne constitue pas une preuve de ticket, branche ou PR déjà créé. Le <a href="GITHUB-PAS-A-PAS.html">guide GitHub</a> donne une procédure d'import progressive et honnête des fichiers.</p>
+<h2>8. Validation et Definition of Done</h2>
+<p>Les tests sont dérivés des scénarios UC : nominal valide, alternatives métier, refus d'accès et absence d'effet secondaire en cas d'échec. Les résultats locaux réellement mesurés figurent dans <a href="VALIDATION.html">VALIDATION.md</a>.</p>
+<p>Un UC est terminé pour la remise lorsque ses critères sont satisfaits, ses tests passent, son ticket et sa branche existent, la CI distante est verte, les diagrammes correspondent au code et la revue a été effectuée. La chaîne demandée est <strong>UC → ticket → branche → classes → tests</strong>.</p>
+<p>Le code et les tests locaux sont disponibles. L'exécution GitHub, les tags/milestones, l'identification réelle des membres et la revue par une autre équipe restent à effectuer par les personnes concernées.</p>
+<h2>9. Vérification des consignes du sujet</h2>
+<table>
+<thead>
+<tr>
+  <th>Consigne</th>
+  <th>Livrable / état</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td>Petit système de 4 à 6 UC dont un à risque</td>
+  <td>Six UC ; UC3 et réservation concurrente.</td>
+</tr>
+<tr>
+  <td>Vision en cinq lignes et acteurs</td>
+  <td>Sections 1 et 2.</td>
+</tr>
+<tr>
+  <td>Liste et priorisation sur trois critères</td>
+  <td>Sections 3 et 4.</td>
+</tr>
+<tr>
+  <td>Trois itérations, quatre phases et jalons</td>
+  <td>Section 5.</td>
+</tr>
+<tr>
+  <td>Dépôt, tableau, tickets, milestones, branches et tags</td>
+  <td>Procédure préparée ; à exécuter manuellement sur Git/GitHub.</td>
+</tr>
+<tr>
+  <td>Diagramme de cas d'utilisation en PlantUML</td>
+  <td><code>diagrams/use-cases.puml</code>, SVG et PNG ; commit à faire.</td>
+</tr>
+<tr>
+  <td>Architecture de bout en bout et premier test en CI</td>
+  <td>Code + ElaborationIntegrationTest ; local vérifié, CI distante à lancer soi-même.</td>
+</tr>
+<tr>
+  <td>Tag v0.1-elaboration et fermeture du milestone</td>
+  <td>À faire après preuve de CI distante verte.</td>
+</tr>
+<tr>
+  <td>Classes et séquence dérivées d'une fiche UC</td>
+  <td><code>classes.puml</code>, <code>classes-architecture.puml</code>, <code>reservation-sequence.puml</code>.</td>
+</tr>
+<tr>
+  <td>Implémentation en couches</td>
+  <td>Packages controller, dto, service, domain, repository, exception.</td>
+</tr>
+<tr>
+  <td>Tests unitaires et intégration du nominal</td>
+  <td>ConflictPoliciesTest, ElaborationIntegrationTest et ReservationIntegrationTest.</td>
+</tr>
+<tr>
+  <td>Revue croisée par une autre équipe</td>
+  <td>Grille prête ; vraie revue à réaliser.</td>
+</tr>
+</tbody>
+</table>
+<h2>10. Sources et décisions</h2>
+<p>Le sujet du TP et le document de transmission d'origine sont conservés dans <code>references/</code>. Les consignes du sujet servent de critères ; le document de transmission sert de proposition fonctionnelle. Les choix Java/Spring/H2, interface locale, comptes de démonstration et notifications simulées relèvent de la réalisation.</p>
+<p>Évolutions par rapport au README initial : <code>vehicleId</code> référence un véhicule persisté au lieu de croire les limites envoyées par le client ; authentification et CSRF ; verrou de station pour la concurrence ; calcul exact du pic électrique ; fiches des six UC ; revue externe distinguée de la relecture entre membres.</p>
+</main><footer>TP1 · Processus unifié et approches agiles · Livraison locale du 25 novembre 2026</footer></body></html>

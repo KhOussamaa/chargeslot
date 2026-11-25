@@ -1,0 +1,82 @@
+@startuml
+!pragma layout smetana
+skinparam backgroundColor #FAFCF8
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultFontName SansSerif
+hide empty members
+title ChargeSlot - Classes du domaine
+class ChargingStation {
+  - id : Long
+  - name : String
+  - maximumPowerKw : BigDecimal
+  - active : boolean
+  + update(name, power, active)
+}
+class Connector {
+  - id : Long
+  - name : String
+  - type : ConnectorType
+  - maximumPowerKw : BigDecimal
+  - active : boolean
+  + update(name, type, power, active)
+}
+class Vehicle {
+  - id : Long
+  - driverId : Long
+  - name : String
+  - connectorType : ConnectorType
+  - maximumAcceptedPowerKw : BigDecimal
+}
+class Reservation {
+  - id : Long
+  - startAt : Instant
+  - endAt : Instant
+  - requestedPowerKw : BigDecimal
+  - status : ReservationStatus
+  + cancel()
+}
+class MaintenanceWindow {
+  - id : Long
+  - startAt : Instant
+  - endAt : Instant
+  - reason : String
+}
+class Notification {
+  - id : Long
+  - reservationId : Long
+  - driverId : Long
+  - eventType : String
+  - status : String
+  - message : String
+  - createdAt : Instant
+}
+enum ConnectorType {
+  CCS
+  TYPE2
+  CHADEMO
+}
+enum ReservationStatus {
+  CONFIRMED
+  CANCELLED
+}
+ChargingStation "1" -- "0..*" Connector : possède
+Connector "1" -- "0..*" Reservation : est réservé par
+Vehicle "1" -- "0..*" Reservation : utilise
+ChargingStation "1" -- "0..*" MaintenanceWindow : concerne
+Connector "0..1" -- "0..*" MaintenanceWindow : cible facultative
+Reservation "1" .. "0..*" Notification : identifiant de corrélation
+Connector --> ConnectorType
+Vehicle --> ConnectorType
+Reservation --> ReservationStatus
+note bottom of MaintenanceWindow
+  connector absent = station entière.
+  Une maintenance ne peut invalider
+  une réservation confirmée.
+end note
+note bottom of Reservation
+  La puissance demandée est acceptée intégralement
+  ou refusée avec une proposition explicite.
+  Pas de réduction silencieuse.
+end note
+@enduml

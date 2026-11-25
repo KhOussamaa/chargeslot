@@ -1,0 +1,331 @@
+{
+  "date": "2026-11-25",
+  "environment": "Java 21.0.10 / Maven Wrapper 3.9.11 / Windows",
+  "suites": [
+    {
+      "name": "com.chargeslot.ConflictPoliciesTest",
+      "tests": "26",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "0.343",
+      "testCases": [
+        {
+          "name": "cancelledReservationDoesNotBlock",
+          "time": "0.169",
+          "passed": true
+        },
+        {
+          "name": "stationMaintenanceBlocksConnector",
+          "time": "0.01",
+          "passed": true
+        },
+        {
+          "name": "inactiveStationIsRefused",
+          "time": "0.0",
+          "passed": true
+        },
+        {
+          "name": "validCompatibilityIsAccepted",
+          "time": "0.0",
+          "passed": true
+        },
+        {
+          "name": "anotherConnectorDoesNotCauseTimeConflict",
+          "time": "0.0",
+          "passed": true
+        },
+        {
+          "name": "outsideIntervalDoesNotConsumePower",
+          "time": "0.0",
+          "passed": true
+        },
+        {
+          "name": "capacityExceededProposesRemainingPower",
+          "time": "0.015",
+          "passed": true
+        },
+        {
+          "name": "marginBlocksAdjacentSlot",
+          "time": "0.0",
+          "passed": true
+        },
+        {
+          "name": "consecutiveLoadsAreNotAddedTogether",
+          "time": "0.001",
+          "passed": true
+        },
+        {
+          "name": "simultaneousLoadsAreAdded",
+          "time": "0.002",
+          "passed": true
+        },
+        {
+          "name": "conflictEngineReturnsAllRelevantReasons",
+          "time": "0.007",
+          "passed": true
+        },
+        {
+          "name": "vehiclePowerLimitIsEnforced",
+          "time": "0.001",
+          "passed": true
+        },
+        {
+          "name": "capacityAtExactLimitIsAccepted",
+          "time": "0.0",
+          "passed": true
+        },
+        {
+          "name": "connectorMaintenanceBlocksConnector",
+          "time": "0.0",
+          "passed": true
+        },
+        {
+          "name": "adjacentIntervalsAreAccepted(int, int)[1]",
+          "time": "0.014",
+          "passed": true
+        },
+        {
+          "name": "adjacentIntervalsAreAccepted(int, int)[2]",
+          "time": "0.0",
+          "passed": true
+        },
+        {
+          "name": "detectsEveryOverlapShape(int, int)[1]",
+          "time": "0.015",
+          "passed": true
+        },
+        {
+          "name": "detectsEveryOverlapShape(int, int)[2]",
+          "time": "0.0",
+          "passed": true
+        },
+        {
+          "name": "detectsEveryOverlapShape(int, int)[3]",
+          "time": "0.001",
+          "passed": true
+        },
+        {
+          "name": "detectsEveryOverlapShape(int, int)[4]",
+          "time": "0.002",
+          "passed": true
+        },
+        {
+          "name": "detectsEveryOverlapShape(int, int)[5]",
+          "time": "0.002",
+          "passed": true
+        },
+        {
+          "name": "anotherConnectorMaintenanceDoesNotBlock",
+          "time": "0.001",
+          "passed": true
+        },
+        {
+          "name": "adjacentMaintenanceDoesNotBlock",
+          "time": "0.001",
+          "passed": true
+        },
+        {
+          "name": "incompatibleConnectorIsRefused",
+          "time": "0.001",
+          "passed": true
+        },
+        {
+          "name": "connectorPowerLimitIsEnforced",
+          "time": "0.001",
+          "passed": true
+        },
+        {
+          "name": "inactiveConnectorIsRefused",
+          "time": "0.0",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "com.chargeslot.ElaborationIntegrationTest",
+      "tests": "1",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "7.64",
+      "testCases": [
+        {
+          "name": "executableArchitectureAcceptsNominalAndRejectsOverlap",
+          "time": "0.872",
+          "passed": true
+        }
+      ]
+    },
+    {
+      "name": "com.chargeslot.ReservationIntegrationTest",
+      "tests": "32",
+      "failures": "0",
+      "errors": "0",
+      "skipped": "0",
+      "time": "6.871",
+      "testCases": [
+        {
+          "name": "operatorCanCreateStationAndConnector",
+          "time": "0.499",
+          "passed": true
+        },
+        {
+          "name": "excessiveVehiclePowerIsRefused",
+          "time": "0.192",
+          "passed": true
+        },
+        {
+          "name": "driversOnlySeeTheirOwnReservationsAndNotifications",
+          "time": "0.363",
+          "passed": true
+        },
+        {
+          "name": "overlappingRequestReturns409WithoutCreatingAnotherReservation",
+          "time": "0.201",
+          "passed": true
+        },
+        {
+          "name": "invalidDatesAreRejected",
+          "time": "0.115",
+          "passed": true
+        },
+        {
+          "name": "anotherDriverCannotCancel",
+          "time": "0.215",
+          "passed": true
+        },
+        {
+          "name": "parallelRequestsCannotDoubleBookConnector",
+          "time": "0.064",
+          "passed": true
+        },
+        {
+          "name": "deactivatedConnectorIsExcluded",
+          "time": "0.204",
+          "passed": true
+        },
+        {
+          "name": "availabilityExcludesBookedAndIncompatibleConnectors",
+          "time": "0.198",
+          "passed": true
+        },
+        {
+          "name": "stationPowerIsSharedBetweenConnectors",
+          "time": "0.192",
+          "passed": true
+        },
+        {
+          "name": "nominalScenarioPersistsAndNotifiesAfterCommit",
+          "time": "0.106",
+          "passed": true
+        },
+        {
+          "name": "stationMaintenanceBlocksReservation",
+          "time": "0.104",
+          "passed": true
+        },
+        {
+          "name": "stationPowerCannotBeReducedBelowConfirmedLoad",
+          "time": "0.193",
+          "passed": true
+        },
+        {
+          "name": "creationLocationCanBeReadByOwnerOnly",
+          "time": "0.267",
+          "passed": true
+        },
+        {
+          "name": "notificationFailureDoesNotRollBackReservation",
+          "time": "0.1",
+          "passed": true
+        },
+        {
+          "name": "cancellationReleasesSlotAndIsIdempotent",
+          "time": "0.279",
+          "passed": true
+        },
+        {
+          "name": "anotherConnectorWithinPowerBudgetIsAccepted",
+          "time": "0.137",
+          "passed": true
+        },
+        {
+          "name": "driverCannotManageInfrastructure",
+          "time": "0.075",
+          "passed": true
+        },
+        {
+          "name": "csrfIsRequiredForWrites",
+          "time": "0.014",
+          "passed": true
+        },
+        {
+          "name": "incompatibleVehicleIsRefused",
+          "time": "0.076",
+          "passed": true
+        },
+        {
+          "name": "pastDatesAreRejected",
+          "time": "0.095",
+          "passed": true
+        },
+        {
+          "name": "maintenanceCannotInvalidateConfirmedReservation",
+          "time": "0.195",
+          "passed": true
+        },
+        {
+          "name": "vehicleAndDeclaredDriverMustAgree",
+          "time": "0.082",
+          "passed": true
+        },
+        {
+          "name": "consecutiveExistingLoadsDoNotCauseFalsePowerConflict",
+          "time": "0.214",
+          "passed": true
+        },
+        {
+          "name": "missingConnectorReturns404",
+          "time": "0.089",
+          "passed": true
+        },
+        {
+          "name": "operatorCanCancel",
+          "time": "0.145",
+          "passed": true
+        },
+        {
+          "name": "zeroPowerIsRejectedByValidation",
+          "time": "0.148",
+          "passed": true
+        },
+        {
+          "name": "driverCannotImpersonateAnotherDriver",
+          "time": "0.073",
+          "passed": true
+        },
+        {
+          "name": "authenticationIsRequired",
+          "time": "0.014",
+          "passed": true
+        },
+        {
+          "name": "parallelRequestsCannotExceedStationPower",
+          "time": "0.022",
+          "passed": true
+        },
+        {
+          "name": "operatorCanCreateAndDeleteMaintenance",
+          "time": "0.19",
+          "passed": true
+        },
+        {
+          "name": "adjacentRequestIsAccepted",
+          "time": "0.135",
+          "passed": true
+        }
+      ]
+    }
+  ]
+}

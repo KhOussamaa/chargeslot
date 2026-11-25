@@ -1,0 +1,10 @@
+target/
+data/
+.tools/
+*.log
+.idea/
+.vscode/
+*.iml
+chargeslot.jar
+.DS_Store
+Thumbs.db

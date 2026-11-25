@@ -1,0 +1,7 @@
+[INFO] Tests run: 26, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.343 s -- in com.chargeslot.ConflictPoliciesTest
+[INFO] Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.640 s -- in com.chargeslot.ElaborationIntegrationTest
+[INFO] Tests run: 32, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.871 s -- in com.chargeslot.ReservationIntegrationTest
+[INFO] Tests run: 59, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS
+[INFO] Total time:  21.812 s
+[INFO] Finished at: 2026-11-25T02:26:37+01:00

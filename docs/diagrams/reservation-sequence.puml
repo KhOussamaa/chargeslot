@@ -1,0 +1,54 @@
+@startuml
+skinparam backgroundColor #FAFCF8
+skinparam shadowing false
+skinparam defaultFontName SansSerif
+autonumber
+title ChargeSlot - UC2 incluant UC3 et UC5
+actor Conducteur
+participant ReservationController as Controller
+participant "ReservationService\n(proxy transactionnel)" as Service
+participant StationRepository as Station
+participant ConflictContextFactory as Context
+participant ConflictEngine as Engine
+database "ReservationRepository\nMaintenanceRepository" as Data
+participant "Événements Spring" as Events
+participant NotificationService as Notification
+participant LocalNotificationGateway as Gateway
+database NotificationRepository as NRepo
+Conducteur -> Controller : POST /api/reservations\nBasic + CSRF + demande
+Controller -> Service : create(request, actor)
+activate Service
+Service -> Service : dates, identité et propriétaire du véhicule
+Service -> Station : lockById(stationId)\nPESSIMISTIC_WRITE
+Station --> Service : station verrouillée
+Service -> Context : create(connector, vehicle, start, end, power)
+Context -> Data : findOverlapping(stationId, ...)
+Data --> Context : réservations confirmées et maintenances
+Context --> Service : ConflictContext
+Service -> Engine : requireNoConflicts(context)
+Engine -> Engine : OverlapPolicy + CompatibilityPolicy\nMaintenancePolicy + PowerCapacityPolicy
+alt conflit
+  Engine --> Service : ApiException(409, motifs)
+  Service --> Controller : exception, transaction annulée
+  Controller --> Conducteur : 409 Conflict (via ApiExceptionHandler)
+else aucun conflit
+  Engine --> Service : aucun conflit
+  Service -> Data : saveAndFlush(reservation CONFIRMED)
+  Data --> Service : réservation avec identifiant
+  Service -> Events : publishEvent(ReservationEvent)
+  Service -> Service : commit de la transaction\net libération du verrou
+  Events -> Notification : onReservationEvent(event)\nAFTER_COMMIT / REQUIRES_NEW
+  Notification -> Gateway : send(driverId, message)
+  alt livraison locale réussie
+    Gateway --> Notification : succès
+    Notification -> NRepo : save(notification SENT)
+  else panne de l'adaptateur
+    Gateway --> Notification : RuntimeException
+    Notification -> NRepo : save(notification FAILED)
+    note right of Notification : La réservation reste CONFIRMED.
+  end
+  Service --> Controller : ReservationView
+  Controller --> Conducteur : 201 Created + Location
+end
+deactivate Service
+@enduml

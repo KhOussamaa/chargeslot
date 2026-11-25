@@ -1,0 +1,115 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Fiches des cas d&#x27;utilisation ChargeSlot - ChargeSlot</title><style>
+:root{color-scheme:light}*{box-sizing:border-box}body{margin:0;background:#f3f6ef;color:#19362c;font:16px/1.7 "Segoe UI",Arial,sans-serif}header{background:#173f30;color:white;padding:25px max(24px,calc((100vw - 1050px)/2));display:flex;gap:22px;align-items:center;flex-wrap:wrap}header strong{font-size:1.4rem}header a{color:#dcf789;text-decoration:none}main{max-width:1100px;background:white;margin:30px auto;padding:45px 55px;border:1px solid #dce4d7;border-radius:16px}h1{font-size:2.2rem;line-height:1.2;letter-spacing:-1px}h2{font-size:1.45rem;margin-top:2em;border-bottom:1px solid #dce4d7;padding-bottom:8px}h3{margin-top:1.6em}a{color:#146b4c}pre{padding:20px;background:#eff3e9;border-radius:10px;overflow:auto;font-size:13px;line-height:1.6}code{font-family:Consolas,monospace;font-size:.88em}table{border-collapse:collapse;display:block;overflow:auto;margin:22px 0;font-size:14px}th,td{padding:12px 14px;border:1px solid #dce4d7;vertical-align:top}th{background:#eff3e9}tr:nth-child(even){background:#fafcf8}blockquote{border-left:4px solid #b9da82;padding-left:20px;color:#5c7068}img{max-width:100%;height:auto}li{margin:6px 0}.subtitle{color:#60746a}.diagram{margin:25px 0 55px;border:1px solid #dce4d7;padding:20px;border-radius:12px}.diagram img{display:block;background:#fafcf8}footer{text-align:center;font-size:13px;color:#60746a;padding:22px}.links{display:flex;gap:15px;flex-wrap:wrap}@media(max-width:700px){main{margin:12px;padding:24px 20px}h1{font-size:1.8rem}}@media print{body{background:white;font-size:11pt}header,footer{display:none}main{border:0;margin:0;padding:0;max-width:none}h2{break-after:avoid}pre,table{break-inside:avoid}a{color:inherit}pre{white-space:pre-wrap}table{display:table;width:100%}}
+</style></head><body><header><strong>ϟ ChargeSlot</strong><a href="../LIRE-MOI.html">Accueil du dossier</a><a href="../docs/rapport-tp.html">Rapport TP</a><a href="../docs/GITHUB-PAS-A-PAS.html">Guide GitHub</a><a href="../docs/diagrams/index.html">Diagrammes</a></header><main><h1>Fiches des cas d'utilisation ChargeSlot</h1>
+<p>Les identifiants UC1 à UC6 correspondent au document de transmission. Les dates utilisent des intervalles <code>[début, fin[</code> : une réservation finissant à 15 h et une commençant à 15 h sont adjacentes, sans conflit si la marge est nulle.</p>
+<h2>UC1 - Consulter les disponibilités</h2>
+<p><strong>Acteur :</strong> conducteur, ou opérateur pour un conducteur.<br />
+<strong>But :</strong> trouver un connecteur réellement utilisable pour un véhicule et une puissance.<br />
+<strong>Préconditions :</strong> authentification et véhicule existant appartenant au conducteur, sauf opérateur.<br />
+<strong>Déclencheur :</strong> saisie d'un intervalle et d'une puissance, avec station/type facultatifs.</p>
+<p>Scénario nominal :</p>
+<ol>
+<li>Le conducteur choisit un de ses véhicules, un début, une fin et une puissance.</li>
+<li>Il peut restreindre la station ou le type de connecteur.</li>
+<li>Le système valide l'intervalle et les droits sur le véhicule.</li>
+<li>Il vérifie chaque connecteur candidat avec les mêmes politiques que la réservation.</li>
+<li>Il affiche uniquement les connecteurs utilisables et leur puissance maximale disponible sur tout le créneau.</li>
+</ol>
+<p>Alternatives : données invalides → 400 ; véhicule/station absent → 404 ; véhicule d'un tiers → 403 ; aucune disponibilité → liste vide 200. Une disponibilité peut changer avant confirmation : UC2 revérifie toujours sous verrou.</p>
+<p><strong>Postcondition :</strong> aucune donnée métier modifiée.<br />
+<strong>Acceptation :</strong> filtre station/type effectif, réservations et maintenances exclues, puissance globale prise en compte.<br />
+<strong>Route :</strong> GET <code>/api/availability</code>.</p>
+<h2>UC2 - Réserver un créneau de recharge</h2>
+<p><strong>Acteur :</strong> conducteur, ou opérateur pour son compte.<br />
+<strong>But :</strong> confirmer un connecteur compatible à une puissance déterminée.<br />
+<strong>Préconditions :</strong> compte authentifié, jeton CSRF valide, véhicule/station/connecteur existants.<br />
+<strong>Déclencheur :</strong> confirmation d'une demande.</p>
+<p>Scénario nominal :</p>
+<ol>
+<li>Le conducteur consulte UC1 et choisit un connecteur.</li>
+<li>Il confirme son véhicule, l'intervalle et la puissance.</li>
+<li>Le système valide le JSON et les dates ; le début doit être futur, au plus à 366 jours, pour une durée maximale de 24 h.</li>
+<li>Il vérifie que le conducteur et le propriétaire du véhicule correspondent et que l'acteur a le droit d'agir.</li>
+<li>Il prend le verrou de la station.</li>
+<li>Il charge les réservations/maintenances et exécute UC3.</li>
+<li>Il persiste une réservation CONFIRMED, à la puissance exactement demandée.</li>
+<li>Il publie un événement et valide la transaction.</li>
+<li>UC5 traite la confirmation après commit.</li>
+<li>Le client reçoit 201 Created, un identifiant et l'en-tête Location.</li>
+</ol>
+<p>Alternatives : JSON/dates/puissance invalides → 400 ; ressource absente → 404 ; identité interdite → 403 ; conflit UC3 → 409, avec motifs. Une puissance station insuffisante contient <code>availablePowerKw</code> et une proposition. Le conducteur doit renvoyer une nouvelle demande s'il accepte la réduction. Un échec de notification ne supprime pas la réservation.</p>
+<p><strong>Postconditions :</strong> succès → une réservation CONFIRMED ; refus → aucune nouvelle réservation, aucune notification de confirmation.<br />
+<strong>Acceptation :</strong> persistance de bout en bout, 201, absence de doublon, données vérifiées côté serveur.<br />
+<strong>Routes :</strong> POST <code>/api/reservations</code> ; GET de la liste et de <code>/{id}</code> pour le suivi.</p>
+<h2>UC3 - Vérifier les conflits (risque technique)</h2>
+<p><strong>Initiateur :</strong> UC2 ; la même logique est réutilisée en lecture par UC1.<br />
+<strong>But :</strong> empêcher une recharge impossible.<br />
+<strong>Préconditions :</strong> demande validée, données du véhicule/connecteur/station chargées ; verrou détenu pendant une confirmation.<br />
+<strong>Déclencheur :</strong> appel de ConflictEngine.</p>
+<p>Scénario nominal :</p>
+<ol>
+<li>Vérifier le chevauchement sur le même connecteur, marge facultative comprise.</li>
+<li>Vérifier l'activation, le type de connecteur et les limites véhicule/connecteur.</li>
+<li>Vérifier la maintenance du connecteur ou de la station.</li>
+<li>Calculer le pic de puissance des autres réservations pendant l'intervalle.</li>
+<li>Vérifier <code>pic existant + puissance demandée &lt;= capacité station</code>.</li>
+<li>Retourner une liste de conflits vide et autoriser UC2 à poursuivre.</li>
+</ol>
+<p>Alternatives : OVERLAP, INACTIVE, INCOMPATIBLE, VEHICLE_POWER_LIMIT, CONNECTOR_POWER_LIMIT, MAINTENANCE ou POWER_ADJUSTMENT_REQUIRED. Plusieurs motifs peuvent être retournés ; le code principal correspond au premier selon l'ordre des politiques.</p>
+<p><strong>Postcondition :</strong> aucune écriture ; UC2 décide de persister seulement si la liste est vide.<br />
+<strong>Acceptation :</strong> cas inclus/englobant/partiel, adjacence, maintenance, limites, pic réel et concurrence testés.<br />
+<strong>Route :</strong> fonction interne incluse dans POST <code>/api/reservations</code>, pas d'acteur « système » fictif.</p>
+<h2>UC4 - Annuler une réservation</h2>
+<p><strong>Acteur :</strong> propriétaire ou opérateur.<br />
+<strong>But :</strong> libérer le créneau avant son début.<br />
+<strong>Préconditions :</strong> authentification, CSRF et réservation existante.<br />
+<strong>Déclencheur :</strong> action « Annuler ».</p>
+<p>Scénario nominal :</p>
+<ol>
+<li>L'acteur sélectionne une réservation.</li>
+<li>Le système prend le verrou de sa station et contrôle les droits.</li>
+<li>Il vérifie que la réservation n'a pas commencé.</li>
+<li>Il passe le statut à CANCELLED, sans supprimer l'historique.</li>
+<li>Il valide la transaction et déclenche UC5.</li>
+<li>Il retourne 200 avec le statut annulé ; les prochaines recherches ignorent cette réservation.</li>
+</ol>
+<p>Alternatives : réservation absente → 404 ; autre conducteur → 403 ; déjà commencée → 409 ALREADY_STARTED ; déjà annulée → 200 sans deuxième notification.</p>
+<p><strong>Postcondition :</strong> le créneau et la puissance sont libérés pour les prochaines réservations.<br />
+<strong>Acceptation :</strong> propriétaire/opérateur uniquement, annulation idempotente, nouvelle réservation possible.<br />
+<strong>Route :</strong> POST <code>/api/reservations/{id}/cancel</code>.</p>
+<h2>UC5 - Notifier le conducteur</h2>
+<p><strong>Acteur bénéficiaire :</strong> conducteur ; fournisseur de notification en support.<br />
+<strong>But :</strong> tracer la confirmation ou l'annulation.<br />
+<strong>Précondition :</strong> transaction UC2/UC4 validée.<br />
+<strong>Déclencheur :</strong> événement ReservationEvent après commit.</p>
+<p>Scénario nominal :</p>
+<ol>
+<li>NotificationService reçoit l'événement dans une transaction distincte.</li>
+<li>Il construit le message avec l'identifiant de réservation et le type d'événement.</li>
+<li>L'adaptateur local écrit le message dans le journal.</li>
+<li>Une Notification SENT est persistée.</li>
+<li>Le conducteur retrouve la notification dans son espace ; l'opérateur voit la liste globale.</li>
+</ol>
+<p>Alternative : exception de l'adaptateur → Notification FAILED persistée ; la réservation déjà confirmée/annulée reste dans son état. Aucun e-mail ou SMS réel n'est envoyé dans ce TP.</p>
+<p><strong>Postcondition :</strong> résultat de la tentative consultable.<br />
+<strong>Acceptation :</strong> confirmation et annulation visibles, séparation entre utilisateurs, panne simulée testée.<br />
+<strong>Route de consultation :</strong> GET <code>/api/notifications</code>.</p>
+<h2>UC6 - Gérer les stations, connecteurs et maintenances</h2>
+<p><strong>Acteur :</strong> opérateur.<br />
+<strong>But :</strong> maintenir une infrastructure cohérente.<br />
+<strong>Préconditions :</strong> rôle opérateur authentifié et CSRF valide pour les écritures.<br />
+<strong>Déclencheur :</strong> formulaire de gestion.</p>
+<p>Scénario nominal :</p>
+<ol>
+<li>L'opérateur crée ou modifie une station (nom, capacité, activation).</li>
+<li>Il crée ou modifie ses connecteurs (nom, type, puissance, activation).</li>
+<li>Pour une maintenance, il choisit une station, éventuellement un connecteur, un intervalle et un motif.</li>
+<li>Le système prend le verrou de la station et vérifie les réservations existantes.</li>
+<li>Il persiste la modification et retourne la ressource ; une maintenance peut ensuite être supprimée.</li>
+</ol>
+<p>Alternatives : conducteur ordinaire → 403 ; données invalides → 400 ; ressource absente → 404 ; connecteur d'une autre station → 400 ; maintenance bloquant une réservation confirmée → 409 RESERVATION_EXISTS ; capacité réduite sous une charge déjà confirmée → 409 CAPACITY_IN_USE ; type/puissance de connecteur invalidant une réservation → 409 CONNECTOR_IN_USE.</p>
+<p>Désactiver une station ou un connecteur interdit les <strong>nouvelles</strong> réservations ; les réservations existantes restent visibles et doivent être annulées explicitement si nécessaire. Il n'y a pas de suppression silencieuse de réservation.</p>
+<p><strong>Postcondition :</strong> catalogue mis à jour sans rendre impossible une réservation déjà confirmée par une réduction de capacité/limite ou l'ajout d'une maintenance.<br />
+<strong>Acceptation :</strong> gestion réservée à l'opérateur, contrôle des références, opérations reflétées dans UC1/UC2.<br />
+<strong>Routes :</strong> POST/PATCH stations et connecteurs, GET/POST/DELETE maintenances ; voir README pour les chemins complets.</p>
+</main><footer>TP1 · Processus unifié et approches agiles · Livraison locale du 25 novembre 2026</footer></body></html>
